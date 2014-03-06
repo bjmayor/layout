@@ -7,8 +7,8 @@
 //
 
 #import "UIView+LinearLayout.h"
-#import <objc/runtime.h>
 #import "UIColor+Colours.h"
+#import <objc/runtime.h>
 static const void *totalWidthKey  = @"totalWidthKey";
 static const void *totalHeightKey  = @"totalHeightKey";
 static const void *debugModeKey  = @"debugModeKey";
@@ -53,6 +53,16 @@ static const void *debugModeKey  = @"debugModeKey";
 {
     float startX = 0, startY=0;
     float totalWidth =0 , totolHeight = 0;
+    CGFloat unfilledWidth = self.frame.size.width;
+    CGFloat unfilledHeight = self.frame.size.height;
+    
+    if (direction == LayoutHorizontal) {
+        unfilledWidth = [self unfilledWidth];
+    }
+    else
+    {
+        unfilledHeight = [self unfilledHeight];
+    }
     
     for (UIView *subView in self.subviews) {
         if (subView.isHidden) {
@@ -65,20 +75,26 @@ static const void *debugModeKey  = @"debugModeKey";
         switch (direction) {
             case LayoutVertical:
             {
+                if (subView.fillType == FillTypeAuto) {
+                    subView.frame = CGRectMake(subView.frame.origin.x, subView.frame.origin.y, subView.frame.size.width, subView.weight/1.0*unfilledHeight);
+                }
                 if (AlignHorizontalCenter == subView.alignType) {
                     subView.marginLeft = (self.frame.size.width-subView.frame.size.width)/2.0;
                 }
-                subView.frame = CGRectMake(subView.marginLeft, startY+subView.marginTop, subView.frame.size.width, subView.frame.size.height);
-                startY += subView.frame.size.height+subView.marginTop+subView.marginBottom;
-                totolHeight +=subView.frame.size.height+subView.marginTop+subView.marginBottom;
+                subView.frame = CGRectMake(subView.marginLeft, startY+subView.lMarginTop, subView.frame.size.width, subView.frame.size.height);
+                startY += subView.frame.size.height+subView.lMarginTop+subView.marginBottom;
+                totolHeight +=subView.frame.size.height+subView.lMarginTop+subView.marginBottom;
             }
                 break;
             case LayoutHorizontal:
             {
-                if (AlignVerticalCenter == subView.alignType) {
-                    subView.marginTop = (self.frame.size.height-subView.frame.size.height)/2.0;
+                if (subView.fillType == FillTypeAuto) {
+                    subView.frame = CGRectMake(subView.frame.origin.x, subView.frame.origin.y, subView.weight/1.0*unfilledWidth, subView.frame.size.height);
                 }
-                subView.frame = CGRectMake(startX+subView.marginLeft, subView.marginTop, subView.frame.size.width, subView.frame.size.height);
+                if (AlignVerticalCenter == subView.alignType) {
+                    subView.lMarginTop = (self.frame.size.height-subView.frame.size.height)/2.0;
+                }
+                subView.frame = CGRectMake(startX+subView.marginLeft, subView.lMarginTop, subView.frame.size.width, subView.frame.size.height);
                 startX+=subView.frame.size.width+subView.marginLeft+subView.marginRight;
                 totalWidth +=subView.frame.size.width+subView.marginLeft+subView.marginRight;
             }
@@ -90,6 +106,30 @@ static const void *debugModeKey  = @"debugModeKey";
     self.totalHeight = MAX(totolHeight, [self maxHeight]);
     self.totalWidth = MAX(totalWidth, [self maxWidth]);
 }
+
+
+- (CGFloat)unfilledWidth
+{
+    CGFloat unfilledWidth = self.frame.size.width;
+    for (UIView *subView in self.subviews) {
+        if (subView.fillType == FillTypeFixed) {
+            unfilledWidth -= subView.marginLeft+subView.frame.size.width+subView.marginRight;
+        }
+    }
+    return unfilledWidth;
+}
+
+- (CGFloat)unfilledHeight
+{
+    CGFloat unfilledHeight = self.frame.size.height;
+    for (UIView *subView in self.subviews) {
+        if (subView.fillType == FillTypeFixed) {
+            unfilledHeight -= subView.marginBottom+subView.frame.size.height+subView.lMarginTop;
+        }
+    }
+    return unfilledHeight;
+}
+
 
 - (float)maxWidth
 {
@@ -113,7 +153,7 @@ static const void *debugModeKey  = @"debugModeKey";
         if (subView.isHidden) {
             continue;
         }
-        CGFloat height = subView.frame.size.height+subView.marginTop+subView.marginBottom;
+        CGFloat height = subView.frame.size.height+subView.lMarginTop+subView.marginBottom;
         if (height > maxHeight) {
             maxHeight = height;
         }

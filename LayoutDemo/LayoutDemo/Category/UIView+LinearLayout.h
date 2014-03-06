@@ -15,7 +15,7 @@ typedef enum {
 } LayoutDirection;
 
 
-
+/***************************线性布局***************************/
 /**@brief 现在没有支持对齐，水平布局是左对齐， 垂直布局是顶对齐。目前只负责一行/一列的布局
  *
  *
@@ -27,3 +27,6 @@ typedef enum {
 @property (nonatomic, assign) float totalHeight;
 @property (nonatomic, assign) BOOL debugMode;
 @end
+
+
+
